@@ -27,14 +27,6 @@ export default defineConfig(({ mode }) => ({
             ]
           : []),
       ],
-      // 不打包 tinymce
-      external: [/tinymce/],
-    },
-    terserOptions: {
-      compress: true,
-      mangle: true,
-      // 跳过 tinymce
-      exclude: [/tinymce/],
     },
   },
 }))

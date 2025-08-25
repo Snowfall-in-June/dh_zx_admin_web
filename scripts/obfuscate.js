@@ -21,6 +21,7 @@ if (!fs.existsSync(distDir)) {
 console.log('Starting JS obfuscation in', distDir)
 
 walk(distDir, (file) => {
+  return
   if (file.includes('tinymce')) return
   if (!file.endsWith('.js')) return
   try {
