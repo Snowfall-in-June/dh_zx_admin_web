@@ -1,0 +1,7 @@
+body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin: 0; padding: 0; }
+nav { background:#0f172a; color:#fff; padding:10px 16px }
+nav a { color:#9aa7c7; margin-right:12px; text-decoration:none }
+.container { padding:16px }
+input, textarea { width:100%; padding:8px; margin:6px 0; box-sizing:border-box }
+button { padding:8px 12px; margin-right:8px }
+.article { border:1px solid #e2e8f0; padding:12px; margin-bottom:8px }
