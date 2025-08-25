@@ -35,17 +35,31 @@
                 <label class="form-label">正文：</label>
                 <RichEditorTiny v-model="content" />
             </div>
-            <div class="preview-section">
-                <label class="form-label">实时预览：</label>
-                <div class="preview" v-html="sanitizedContent"></div>
-            </div>
+
         </div>
 
         <!-- 保存按钮与提示 -->
         <div class="form-actions">
             <button @click="save" class="btn-save">保存</button>
             <button @click="back" class="btn-save">返回</button>
+            <button @click="showPreview = true" class="btn-save">浏览</button>
             <span v-if="message" class="save-message">{{ message }}</span>
+        </div>
+
+        <!-- 模态框 -->
+        <div v-if="showPreview" class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>实时预览</h3>
+                    <button @click="showPreview = false" class="close-btn">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="preview" v-html="sanitizedContent"></div>
+                </div>
+                <div class="modal-footer">
+                    <button @click="showPreview = false" class="btn">关闭</button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -70,8 +84,9 @@ export default {
         const title = ref('')
         const content = ref('')
         const message = ref('')
+        const showPreview = ref(false)
 
-        
+
         async function load() {
             if (props.id && props.id !== 'new') {
                 title.value = props.title_p
@@ -89,9 +104,11 @@ export default {
             try {
                 if (props.id && props.id !== 'new') {
                     // 更新文章
-                    const saved = await updateAritcle({id:props.id,researchReportIds: props.files.map(f => f.id).join(','),
+                    const saved = await updateAritcle({
+                        id: props.id, researchReportIds: props.files.map(f => f.id).join(','),
                         articleTitle: title.value,
-                        articleContent: content.value})
+                        articleContent: content.value
+                    })
                     if (saved) {
                         message.value = '更新成功！'
                         setTimeout(() => {
@@ -131,10 +148,11 @@ export default {
         async function back() {
             emit('saved', true)
         }
+ 
 
         onMounted(load)
 
-        return {title,content,sanitizedContent, save, back, message }
+        return { title, content, sanitizedContent, save, back, message,showPreview }
     }
 }
 </script>
@@ -208,7 +226,7 @@ export default {
 }
 
 .editor-section {
-    width: 50%;
+    width: 100%;
 }
 
 .preview-section {
@@ -251,5 +269,44 @@ export default {
 .save-message {
     color: #e90a20;
     font-weight: 500;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal {
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
+  z-index: 100;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+.preview {
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+  min-height: 100px;
 }
 </style>

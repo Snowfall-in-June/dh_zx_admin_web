@@ -27,7 +27,6 @@
                             <td><input type="checkbox" :value="pdf" v-model="selectedFiles" /></td>
                             <td><a :href=pdf.url>{{ pdf.name }}</a></td>
                             <td>{{ pdf.url }}</td>
-
                         </tr>
                     </tbody>
                 </table>
@@ -36,15 +35,22 @@
             <!-- 选中文件提示 -->
             <div v-if="selectedFiles.length" class="selected-info card">
                 已选择 {{ selectedFiles.length }} 个文件：
-                <span v-for="file in selectedFiles" :key="file.url" class="file-tag">
+                <span v-for="(file, index) in selectedFiles" :key="file.url" class="file-tag">
                     {{ file.name }}
+                    <button @click="removeFile(index)" class="remove-btn">
+                        ×
+                    </button>
                 </span>
             </div>
+
 
             <!-- 开始写作按钮 -->
             <div class="action-btn">
                 <button :disabled="selectedFiles.length === 0" @click="startWriting" class="btn-start">
                     开始写作
+                </button>
+                <button :disabled="selectedFiles.length === 0" @click="cleanSelectedFiles" class="btn-start">
+                    清空选择的文件
                 </button>
             </div>
 
@@ -112,7 +118,7 @@ export default {
             loading.value = true
             error.value = ''
             pdfList.value = []
-            selectedFiles.value = []
+            // selectedFiles.value = []
             const AUTH_KEY = 'dh_admin_token'
             const token = localStorage.getItem(AUTH_KEY)
 
@@ -121,7 +127,7 @@ export default {
                 pdfList.value = reports.map(report => ({
                     id: report.id,
                     name: report.title,       // 或者 report.report_title，根据后端字段
-                    url: `/api/research-report/${report.id}?token=${token}` // 拼接下载 URL
+                    url: `${window.location.origin}/api/research-report/${report.id}?token=${token}` // 拼接下载 URL
                 }))
 
             } catch (e) {
@@ -132,6 +138,10 @@ export default {
             }
         }
 
+        const cleanSelectedFiles = () => { selectedFiles = [] }
+        const removeFile =  (index) => {
+            selectedFiles.value.splice(index, 1)
+        }
         const startWriting = () => { writing.value = true }
         const onSaved = (saved) => { if (saved) router.push('/') }
         onMounted(load)
@@ -147,7 +157,9 @@ export default {
             startWriting,
             onSaved,
             title,
-            content
+            content,
+            cleanSelectedFiles,
+            removeFile
         }
     }
 }
@@ -282,4 +294,22 @@ export default {
     margin-top: 12px;
     font-weight: 500;
 }
+.file-tag {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 8px 8px 0;
+  padding: 4px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.remove-btn {
+  margin-left: 6px;
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 </style>

@@ -92,6 +92,7 @@ export default defineComponent({
 
 <style scoped>
 :deep(.tox.tox-tinymce) {
-  min-height: 300px;
+  min-height: 600px;
+  z-index: 1 !important; /* 降低编辑器容器层级 */ 
 }
 </style>
