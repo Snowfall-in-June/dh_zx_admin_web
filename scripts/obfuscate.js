@@ -21,6 +21,7 @@ if (!fs.existsSync(distDir)) {
 console.log('Starting JS obfuscation in', distDir)
 
 walk(distDir, (file) => {
+  if (file.includes('tinymce')) return
   if (!file.endsWith('.js')) return
   try {
     const code = fs.readFileSync(file, 'utf8')

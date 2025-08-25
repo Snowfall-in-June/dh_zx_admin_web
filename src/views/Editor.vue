@@ -1,170 +1,231 @@
 <template>
-    <div class="pdf-editor-page">
-        <!-- 如果还没有开始写作，显示选择 PDF 页面 -->
-        <div v-if="!writing">
-            <h2 class="page-title">选择 PDF 文件</h2>
+  <div class="pdf-editor-page">
+    <!-- 如果还没有开始写作，显示选择 PDF 页面 -->
+    <div v-if="!writing">
+      <h2 class="page-title">选择 PDF 文件</h2>
 
-            <!-- 搜索框 -->
-            <div class="search-bar">
-                <input v-model="keyword" @keyup.enter="searchPDFs" placeholder="输入关键词搜索 PDF" type="text" />
-                <button @click="searchPDFs" class="btn-search">搜索</button>
-            </div>
+      <!-- 搜索框 -->
+      <div class="search-bar">
+        <input
+          v-model="keyword"
+          @keyup.enter="searchPDFs(1)"
+          placeholder="输入关键词搜索 PDF"
+          type="text"
+        />
+        <button @click="searchPDFs(1)" class="btn-search">搜索</button>
+      </div>
 
-            <!-- 搜索结果列表表格 -->
-            <div v-if="pdfList.length" class="pdf-list card">
-                <p class="list-title">搜索结果（{{ pdfList.length }} 个文件）：</p>
-                <table class="pdf-table">
-                    <thead>
-                        <tr>
-                            <th style="width:10%">选择</th>
-                            <th style="width:40%">文件名称</th>
-                            <th style="width:50%">文件地址</th>
+      <!-- 搜索结果列表表格 -->
+      <div v-if="pdfList.length" class="pdf-list card">
+        <p class="list-title">
+          搜索结果（第 {{ currentPage }} 页 / 共 {{ totalPages }} 页，{{ total }} 个文件）：
+        </p>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th style="width:10%">选择</th>
+              <th style="width:40%">文件名称</th>
+              <th style="width:50%">文件地址</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="pdf in pdfList" :key="pdf.id">
+              <td>
+                <input
+                  type="checkbox"
+                  :checked="selectedFileIds.includes(pdf.id)"
+                  @change="toggleFile(pdf, $event)"
+                />
+              </td>
+              <td><a :href="pdf.url" target="_blank">{{ pdf.name }}</a></td>
+              <td>{{ pdf.url }}</td>
+            </tr>
+          </tbody>
+        </table>
 
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="pdf in pdfList" :key="pdf.url">
-                            <td><input type="checkbox" :value="pdf" v-model="selectedFiles" /></td>
-                            <td><a :href=pdf.url>{{ pdf.name }}</a></td>
-                            <td>{{ pdf.url }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- 选中文件提示 -->
-            <div v-if="selectedFiles.length" class="selected-info card">
-                已选择 {{ selectedFiles.length }} 个文件：
-                <span v-for="(file, index) in selectedFiles" :key="file.url" class="file-tag">
-                    {{ file.name }}
-                    <button @click="removeFile(index)" class="remove-btn">
-                        ×
-                    </button>
-                </span>
-            </div>
-
-
-            <!-- 开始写作按钮 -->
-            <div class="action-btn">
-                <button :disabled="selectedFiles.length === 0" @click="startWriting" class="btn-start">
-                    开始写作
-                </button>
-                <button :disabled="selectedFiles.length === 0" @click="cleanSelectedFiles" class="btn-start">
-                    清空选择的文件
-                </button>
-            </div>
-
-            <!-- 加载状态与错误提示 -->
-            <div v-if="loading" class="loading">搜索中...</div>
-            <div v-if="error" class="error">{{ error }}</div>
+        <!-- 分页控制 -->
+        <div class="pagination">
+          <button :disabled="currentPage === 1" @click="searchPDFs(currentPage - 1)">
+            上一页
+          </button>
+          <span>第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <button :disabled="currentPage === totalPages" @click="searchPDFs(currentPage + 1)">
+            下一页
+          </button>
         </div>
+      </div>
 
-        <!-- 写作页面 -->
-        <div v-else>
-            <ArticleForm :files="selectedFiles" :id="id" :title_p="title" :content_p="content" @saved="onSaved" />
-        </div>
+      <!-- 选中文件提示 -->
+      <div v-if="selectedFiles.length" class="selected-info card">
+        已选择 {{ selectedFiles.length }} 个文件：
+        <span v-for="(file, index) in selectedFiles" :key="file.id" class="file-tag">
+          {{ file.name }}
+          <button @click="removeFile(file.id)" class="remove-btn">×</button>
+        </span>
+      </div>
+
+      <!-- 开始写作按钮 -->
+      <div class="action-btn">
+        <button :disabled="selectedFiles.length === 0" @click="startWriting" class="btn-start">
+          开始写作
+        </button>
+        <button :disabled="selectedFiles.length === 0" @click="cleanSelectedFiles" class="btn-start">
+          清空选择的文件
+        </button>
+      </div>
+
+      <!-- 加载状态与错误提示 -->
+      <div v-if="loading" class="loading">搜索中...</div>
+      <div v-if="error" class="error">{{ error }}</div>
     </div>
+
+    <!-- 写作页面 -->
+    <div v-else>
+      <ArticleForm
+        :files="selectedFiles"
+        :id="id"
+        :title_p="title"
+        :content_p="content"
+        @saved="onSaved"
+      />
+    </div>
+  </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ArticleForm from '../components/ArticleForm.vue'
-import { search_research_reports } from '../api/research-report'
+import { search_research_reports, search_research_reports_by_ids } from '../api/research-report'
 import { getArticle } from '../api/articles'
-import { search_research_reports_by_ids } from '../api/research-report'
 
 export default {
-    components: { ArticleForm },
-    props: {
-        id: { type: String, default: 'new' },
-    },
-    setup(props) {
-        const keyword = ref('')
-        const pdfList = ref([])
-        const selectedFiles = ref([])
-        const loading = ref(false)
-        const error = ref('')
-        const writing = ref(false)
-        const title = ref('')
-        const content = ref('')
-        const AUTH_KEY = 'dh_admin_token'
-        const token = localStorage.getItem(AUTH_KEY)
-        const router = useRouter()
+  components: { ArticleForm },
+  props: {
+    id: { type: String, default: 'new' },
+  },
+  setup(props) {
+    const keyword = ref('')
+    const pdfList = ref([])
+    const selectedFiles = ref([]) // 保存选中的文件对象
+    const selectedFileIds = ref([]) // 保存选中的文件 id
+    const loading = ref(false)
+    const error = ref('')
+    const writing = ref(false)
+    const title = ref('')
+    const content = ref('')
+    const currentPage = ref(1)
+    const pageSize = ref(10)
+    const total = ref(0)
+    const AUTH_KEY = 'dh_admin_token'
+    const token = localStorage.getItem(AUTH_KEY)
+    const router = useRouter()
 
-        async function load() {
-            if (props.id && props.id !== 'new') {
-                const a = await getArticle(props.id)
-                if (a) {
-                    title.value = a.articleTitle || ''
-                    content.value = a.articleContent || ''
-                    selectedFiles.value = []
-                    const reports = await search_research_reports_by_ids(a.researchReportIds)
-                    pdfList.value = reports.map(report => ({
-                        id: report.id,
-                        name: report.title,       // 或者 report.report_title，根据后端字段
-                        url: `${window.location.origin}/api/research-report/${report.id}?token=${token}` // 拼接下载 URL
-                    }))
-                    selectedFiles.value = pdfList.value
-                }
-            }
+    const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
+
+    async function load() {
+      if (props.id && props.id !== 'new') {
+        const a = await getArticle(props.id)
+        if (a) {
+          title.value = a.articleTitle || ''
+          content.value = a.articleContent || ''
+          selectedFiles.value = []
+          selectedFileIds.value = []
+          const reports = await search_research_reports_by_ids(a.researchReportIds)
+          pdfList.value = reports.map(report => ({
+            id: report.id,
+            name: report.title,
+            url: `${window.location.origin}/api/research-report/${report.id}?token=${token}`
+          }))
+          selectedFiles.value = [...pdfList.value] // 默认全选
+          selectedFileIds.value = pdfList.value.map(f => f.id)
+          total.value = pdfList.value.length
         }
-        const searchPDFs = async () => {
-            if (!keyword.value.trim()) {
-                error.value = '请输入关键词'
-                return
-            }
-
-            loading.value = true
-            error.value = ''
-            pdfList.value = []
-            // selectedFiles.value = []
-            const AUTH_KEY = 'dh_admin_token'
-            const token = localStorage.getItem(AUTH_KEY)
-
-            try {
-                const reports = await search_research_reports({ param: keyword.value.trim() })
-                pdfList.value = reports.map(report => ({
-                    id: report.id,
-                    name: report.title,       // 或者 report.report_title，根据后端字段
-                    url: `${window.location.origin}/api/research-report/${report.id}?token=${token}` // 拼接下载 URL
-                }))
-
-            } catch (e) {
-                console.error(e)
-                error.value = '搜索失败，请重试'
-            } finally {
-                loading.value = false
-            }
-        }
-
-        const cleanSelectedFiles = () => { selectedFiles = [] }
-        const removeFile =  (index) => {
-            selectedFiles.value.splice(index, 1)
-        }
-        const startWriting = () => { writing.value = true }
-        const onSaved = (saved) => { if (saved) router.push('/') }
-        onMounted(load)
-
-        return {
-            keyword,
-            pdfList,
-            selectedFiles,
-            loading,
-            error,
-            writing,
-            searchPDFs,
-            startWriting,
-            onSaved,
-            title,
-            content,
-            cleanSelectedFiles,
-            removeFile
-        }
+      }
     }
+
+    const searchPDFs = async (page = 1) => {
+      if (!keyword.value.trim()) {
+        error.value = '请输入关键词'
+        return
+      }
+
+      loading.value = true
+      error.value = ''
+      pdfList.value = []
+      currentPage.value = page
+
+      try {
+        const res = await search_research_reports({
+          param: keyword.value.trim(),
+          page: currentPage.value,
+          pageSize: pageSize.value,
+        })
+
+        pdfList.value = res.list.map(report => ({
+          id: report.id,
+          name: report.title,
+          url: `${window.location.origin}/api/research-report/${report.id}?token=${token}`
+        }))
+        total.value = res.total || 0
+      } catch (e) {
+        console.error(e)
+        error.value = '搜索失败，请重试'
+      } finally {
+        loading.value = false
+      }
+    }
+
+    const toggleFile = (pdf, event) => {
+      if (event.target.checked) {
+        if (!selectedFileIds.value.includes(pdf.id)) {
+          selectedFileIds.value.push(pdf.id)
+          selectedFiles.value.push(pdf)
+        }
+      } else {
+        selectedFileIds.value = selectedFileIds.value.filter(id => id !== pdf.id)
+        selectedFiles.value = selectedFiles.value.filter(f => f.id !== pdf.id)
+      }
+    }
+
+    const removeFile = (id) => {
+      selectedFileIds.value = selectedFileIds.value.filter(fid => fid !== id)
+      selectedFiles.value = selectedFiles.value.filter(f => f.id !== id)
+    }
+
+    const cleanSelectedFiles = () => {
+      selectedFiles.value = []
+      selectedFileIds.value = []
+    }
+
+    const startWriting = () => { writing.value = true }
+    const onSaved = (saved) => { if (saved) router.push('/') }
+
+    onMounted(load)
+
+    return {
+      keyword,
+      pdfList,
+      selectedFiles,
+      selectedFileIds,
+      loading,
+      error,
+      writing,
+      searchPDFs,
+      startWriting,
+      onSaved,
+      title,
+      content,
+      cleanSelectedFiles,
+      removeFile,
+      toggleFile,
+      currentPage,
+      totalPages,
+      total
+    }
+  }
 }
 </script>
-
 <style scoped>
 .pdf-editor-page {
     max-width: 900px;
@@ -312,4 +373,25 @@ export default {
   cursor: pointer;
 }
 
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.pagination button {
+    padding: 6px 12px;
+    background-color: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.pagination button:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+    background-color: #e5e7eb;
+}
 </style>

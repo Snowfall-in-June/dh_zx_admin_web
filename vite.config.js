@@ -6,19 +6,18 @@ import path from 'path'
 export default defineConfig(({ mode }) => ({
   plugins: [vue()],
   server: {
-    // port: 8081, // 前端启动端口
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // 后端服务地址
+        target: 'http://localhost:8080',
         changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/api/, ''), // 等价于 pathRewrite
+        rewrite: (p) => p.replace(/^\/api/, ''),
       },
     },
   },
   build: {
     rollupOptions: {
-      plugins:
-        mode === 'production'
+      plugins: [
+        ...(mode === 'production'
           ? [
               strip({
                 include: ['**/*.js', '**/*.ts', '**/*.vue'],
@@ -26,7 +25,16 @@ export default defineConfig(({ mode }) => ({
                 debugger: true,
               }),
             ]
-          : [],
+          : []),
+      ],
+      // 不打包 tinymce
+      external: [/tinymce/],
+    },
+    terserOptions: {
+      compress: true,
+      mangle: true,
+      // 跳过 tinymce
+      exclude: [/tinymce/],
     },
   },
 }))

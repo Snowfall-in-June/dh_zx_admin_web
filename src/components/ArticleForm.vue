@@ -29,37 +29,19 @@
             <input v-model="title" placeholder="请输入文章标题" class="form-input" />
         </div>
 
-        <!-- 正文编辑器与实时预览 -->
+        <!-- 正文编辑器 -->
         <div class="editor-preview-wrapper">
             <div class="editor-section">
                 <label class="form-label">正文：</label>
                 <RichEditorTiny v-model="content" />
             </div>
-
         </div>
 
         <!-- 保存按钮与提示 -->
         <div class="form-actions">
             <button @click="save" class="btn-save">保存</button>
             <button @click="back" class="btn-save">返回</button>
-            <button @click="showPreview = true" class="btn-save">浏览</button>
             <span v-if="message" class="save-message">{{ message }}</span>
-        </div>
-
-        <!-- 模态框 -->
-        <div v-if="showPreview" class="modal-overlay">
-            <div class="modal">
-                <div class="modal-header">
-                    <h3>实时预览</h3>
-                    <button @click="showPreview = false" class="close-btn">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="preview" v-html="sanitizedContent"></div>
-                </div>
-                <div class="modal-footer">
-                    <button @click="showPreview = false" class="btn">关闭</button>
-                </div>
-            </div>
         </div>
     </div>
 </template>
@@ -84,8 +66,6 @@ export default {
         const title = ref('')
         const content = ref('')
         const message = ref('')
-        const showPreview = ref(false)
-
 
         async function load() {
             if (props.id && props.id !== 'new') {
@@ -93,7 +73,6 @@ export default {
                 content.value = props.content_p
             }
         }
-        const sanitizedContent = computed(() => DOMPurify.sanitize(content.value || ''))
 
         async function save() {
             if (!title.value.trim()) {
@@ -148,11 +127,10 @@ export default {
         async function back() {
             emit('saved', true)
         }
- 
 
         onMounted(load)
 
-        return { title, content, sanitizedContent, save, back, message,showPreview }
+        return { title, content, save, back, message }
     }
 }
 </script>
@@ -237,9 +215,7 @@ export default {
 
 .preview {
     height: 400px;
-    /* 固定高度，可根据需要调整 */
     overflow-y: auto;
-    /* 内容超出显示滚动条 */
     padding: 12px;
     background: #fff;
     border: 1px solid #e2e8f0;
@@ -269,44 +245,5 @@ export default {
 .save-message {
     color: #e90a20;
     font-weight: 500;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-.modal {
-  background: #fff;
-  padding: 16px;
-  border-radius: 8px;
-  width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
-  z-index: 100;
-}
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.close-btn {
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-}
-.preview {
-  border: 1px solid #e5e7eb;
-  padding: 12px;
-  min-height: 100px;
 }
 </style>
