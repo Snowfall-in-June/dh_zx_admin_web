@@ -1,8 +1,9 @@
 <template>
     <div>
         <nav>
-            <router-link to="/">Dashboard</router-link>
-            <router-link to="/editor/new">New Article</router-link>
+            <router-link to="/">首页</router-link>
+            <router-link to="/editor/new">新建文章</router-link>
+            <router-link to="/selectResearchReport">新增精选研报</router-link>
             <span style="float:right">
                 <button v-if="auth" @click="logout">Logout</button>
             </span>
