@@ -1,7 +1,7 @@
 <template>
     <div>
         <nav>
-            <router-link to="/">首页</router-link>
+            <router-link to="/">文章列表</router-link>
             <router-link to="/editor/new">新建文章</router-link>
             <router-link to="/selectResearchReport">新增精选研报</router-link>
             <span style="float:right">

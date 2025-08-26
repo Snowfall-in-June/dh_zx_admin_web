@@ -23,11 +23,22 @@
             </table>
         </div>
 
+         <!-- 文章作者 -->
+        <div class="form-group">
+            <label class="form-label">作者：</label>
+            <input v-model="author" placeholder="请输入作者名字" class="form-input" />
+        </div>
         <!-- 文章标题 -->
         <div class="form-group">
             <label class="form-label">标题：</label>
             <input v-model="title" placeholder="请输入文章标题" class="form-input" />
         </div>
+         <!-- 文章 简介 -->
+        <div class="form-group">
+            <label class="form-label">简介：</label>
+            <textarea v-model="sort_content" placeholder="请输入文章简介" class="form-input"></textarea>
+        </div>
+
 
         <!-- 正文编辑器 -->
         <div class="editor-preview-wrapper">
@@ -58,25 +69,39 @@ export default {
         id: { type: String, default: 'new' },
         files: { type: Array, default: () => [] },
         content_p: { type: String, default: 'content' },
-        title_p: { type: String, default: 'titile' }
+        title_p: { type: String, default: 'titile' },
+        author_p:{type:String,default:'author'},
+        sort_content_p:{type:String,default:'sort_content'}
     },
     emits: ['saved'],
     components: { RichEditorTiny },
     setup(props, { emit }) {
         const title = ref('')
         const content = ref('')
+        const sort_content = ref('')
+        const author = ref('')
         const message = ref('')
 
         async function load() {
             if (props.id && props.id !== 'new') {
                 title.value = props.title_p
                 content.value = props.content_p
+                sort_content.value = props.sort_content_p
+                author.value = props.author_p
             }
         }
 
         async function save() {
             if (!title.value.trim()) {
                 message.value = '请输入标题'
+                return
+            }
+            if (!author.value.trim()) {
+                message.value = '请输入作者'
+                return
+            }
+            if (!sort_content.value.trim()) {
+                message.value = '请输入简介'
                 return
             }
 
@@ -86,7 +111,9 @@ export default {
                     const saved = await updateAritcle({
                         id: props.id, researchReportIds: props.files.map(f => f.id).join(','),
                         articleTitle: title.value,
-                        articleContent: content.value
+                        articleContent: content.value,
+                        articleSortContent: sort_content.value,
+                        author: author.value
                     })
                     if (saved) {
                         message.value = '更新成功！'
@@ -102,7 +129,9 @@ export default {
                     const saved = await saveArticle({
                         researchReportIds: props.files.map(f => f.id).join(','),
                         articleTitle: title.value,
-                        articleContent: content.value
+                        articleContent: content.value,
+                        articleSortContent: sort_content.value,
+                        author: author.value
                     })
 
                     if (saved) {
@@ -130,7 +159,7 @@ export default {
 
         onMounted(load)
 
-        return { title, content, save, back, message }
+        return { title, content, save, back, message,sort_content,author }
     }
 }
 </script>

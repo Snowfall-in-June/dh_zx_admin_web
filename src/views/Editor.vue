@@ -86,6 +86,8 @@
         :id="id"
         :title_p="title"
         :content_p="content"
+        :sort_content_p = "sort_content"
+        :author_p = "author"
         @saved="onSaved"
       />
     </div>
@@ -114,6 +116,8 @@ export default {
     const writing = ref(false)
     const title = ref('')
     const content = ref('')
+    const sort_content = ref('')
+    const author = ref('')
     const currentPage = ref(1)
     const pageSize = ref(10)
     const total = ref(0)
@@ -129,6 +133,8 @@ export default {
         if (a) {
           title.value = a.articleTitle || ''
           content.value = a.articleContent || ''
+          sort_content.value = a.articleSortContent || ''
+          author.value = a.author || ''
           selectedFiles.value = []
           selectedFileIds.value = []
           const reports = await search_research_reports_by_ids(a.researchReportIds)
@@ -221,7 +227,9 @@ export default {
       toggleFile,
       currentPage,
       totalPages,
-      total
+      total,
+      author,
+      sort_content
     }
   }
 }

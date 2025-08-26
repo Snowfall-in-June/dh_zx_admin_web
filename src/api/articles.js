@@ -90,3 +90,18 @@ export async function deleteArticle(id) {
     return []
   }
 }
+
+export async function updateTopLevel(id,level) {
+  const token = localStorage.getItem(AUTH_KEY)
+  try {
+    const response = await axios.put(
+      `/api/articles/updateTopLevel`,
+      {id:id,topLevel:level},
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    return response.data || []
+  } catch (e) {
+    console.error('接口请求失败', e)
+    return []
+  }
+}
