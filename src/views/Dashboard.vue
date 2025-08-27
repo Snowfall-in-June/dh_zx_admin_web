@@ -14,6 +14,7 @@
 
       <!-- 其他字段展示 -->
       <div class="article-meta">
+        <span>前端是否显示：{{ a.showFlag == "1" ? "是":"否" }}</span>
         <span>作者：{{ a.author }}</span>
         <span>👍 {{ a.likeCount ?? 0 }}</span>
         <span>🔗 {{ a.shareCount ?? 0 }}</span>
@@ -22,6 +23,8 @@
       </div>
 
       <div class="article-actions">
+        <button class="btn-edit" @click="showFlag(a.id,1)">前端显示</button>
+        <button class="btn-delete" @click="showFlag(a.id,0)">取消显示</button>
         <button class="btn-edit" @click="topLevel(a.id,1)">置顶</button>
         <button class="btn-delete" @click="topLevel(a.id,0)">取消置顶</button>
         
@@ -47,7 +50,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { listArticles, deleteArticle,updateTopLevel} from '../api/articles'
+import { listArticles, deleteArticle,updateTopLevel,updateShowFlag} from '../api/articles'
 
 const articles = ref([])
 const showModal = ref(false)
@@ -68,8 +71,14 @@ async function remove(id) {
 }
 
 async function topLevel(id,level) {
-   if(!confirm("确认置顶?")) return
+   if(!confirm("确认操作?")) return
    await updateTopLevel(id,level)
+   await load()
+}
+
+async function showFlag(id,level) {
+   if(!confirm("确认操作?")) return
+   await updateShowFlag(id,level)
    await load()
 }
 

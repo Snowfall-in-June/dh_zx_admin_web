@@ -105,3 +105,17 @@ export async function updateTopLevel(id,level) {
     return []
   }
 }
+export async function updateShowFlag(id,showFlag) {
+  const token = localStorage.getItem(AUTH_KEY)
+  try {
+    const response = await axios.put(
+      `/api/articles/updateShowFlag`,
+      {id:id,showFlag:showFlag},
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    return response.data || []
+  } catch (e) {
+    console.error('接口请求失败', e)
+    return []
+  }
+}
