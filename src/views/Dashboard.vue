@@ -20,6 +20,7 @@
         <span>🔗 {{ a.shareCount ?? 0 }}</span>
         <span>置顶等级：{{ a.topLevel }}</span>
         <span>创建时间：{{ a.createdAt }}</span>
+        <span>展示次数：{{a.showCount }}</span>
       </div>
 
       <div class="article-actions">
