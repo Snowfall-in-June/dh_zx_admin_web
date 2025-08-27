@@ -119,3 +119,18 @@ export async function updateShowFlag(id,showFlag) {
     return []
   }
 }
+
+export async function uploadImageFile(formData) {
+  const token = localStorage.getItem(AUTH_KEY)
+  try {
+    const response = await axios.post(
+      `/api/images`,
+      formData, 
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    return response.data || {}
+  } catch (e) {
+    console.error('接口请求失败', e)
+    return {}
+  }
+}

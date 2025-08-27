@@ -1,13 +1,10 @@
 <template>
-  <Editor
-    v-model="content"
-    :init="editorConfig"
-    api-key="no-api-key"
-  />
+  <Editor v-model="content" :init="editorConfig" api-key="no-api-key" />
 </template>
 
 <script>
 import { defineComponent, ref, watch } from 'vue'
+import {uploadImageFile} from '../api/articles'
 import Editor from '@tinymce/tinymce-vue'
 
 // === TinyMCE 本地依赖引入 ===
@@ -37,6 +34,7 @@ import 'tinymce/plugins/nonbreaking'
 import 'tinymce/plugins/wordcount'
 import 'tinymce/plugins/help'
 import 'tinymce/plugins/autoresize'
+import 'tinymce/plugins/image'
 
 // 引入中文语言包
 // import 'tinymce/langs/zh_CN'
@@ -59,22 +57,37 @@ export default defineComponent({
       language_url: '/tinymce/langs/zh_CN.js',
       menubar: 'file edit view insert format tools table help',
       plugins: [
-        'advlist autolink lists link charmap preview anchor searchreplace visualblocks visualchars code fullscreen insertdatetime table emoticons hr pagebreak nonbreaking wordcount help autoresize'
+        'advlist autolink lists link image charmap preview anchor searchreplace visualblocks visualchars code fullscreen insertdatetime table emoticons hr pagebreak nonbreaking wordcount help autoresize'
       ],
       toolbar: [
         'undo redo | formatselect fontselect fontsizeselect | bold italic underline strikethrough forecolor backcolor |',
         'alignleft aligncenter alignright alignjustify | bullist numlist outdent indent |',
-        'link table emoticons hr charmap |',
+        'link image table emoticons hr charmap |',
         'code fullscreen preview | removeformat'
       ].join(' '),
       fontsize_formats: '8px 10px 12px 14px 16px 18px 24px 36px 48px 64px',
       font_formats:
         '宋体=SimSun; 黑体=SimHei; 微软雅黑=Microsoft YaHei; Arial=arial,helvetica,sans-serif; Courier New=courier new,courier,monospace; Georgia=georgia,palatino; Times New Roman=times new roman,times; Verdana=verdana,geneva',
       content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-      automatic_uploads: false,
+      automatic_uploads: true,
       images_upload_url: null,
-      file_picker_callback: null
+      file_picker_callback: null,
+      // === 图片上传处理 ===
+      images_upload_handler: async (blobInfo,success, failure) => {
+        try{ 
+        const formData = new FormData()
+        formData.append('file', blobInfo.blob(), blobInfo.filename())
+
+        const resp = await uploadImageFile(formData)
+        console.info("upload images："+resp.location)
+        success(resp.location)
+        }catch(e){
+            failure('图片上传失败');
+        }
+      }
     }
+
+
 
     // 双向绑定
     watch(
@@ -93,6 +106,7 @@ export default defineComponent({
 <style scoped>
 :deep(.tox.tox-tinymce) {
   min-height: 600px;
-  z-index: 1 !important; /* 降低编辑器容器层级 */ 
+  z-index: 1 !important;
+  /* 降低编辑器容器层级 */
 }
 </style>
