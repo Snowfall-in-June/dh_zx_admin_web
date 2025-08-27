@@ -66,7 +66,7 @@
 
       <!-- 开始写作按钮 -->
       <div class="action-btn">
-        <button :disabled="selectedFiles.length === 0" @click="startWriting" class="btn-start">
+        <button  @click="startWriting" class="btn-start">
           开始写作
         </button>
         <button :disabled="selectedFiles.length === 0" @click="cleanSelectedFiles" class="btn-start">
