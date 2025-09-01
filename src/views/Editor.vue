@@ -20,28 +20,40 @@
         <p class="list-title">
           搜索结果（第 {{ currentPage }} 页 / 共 {{ totalPages }} 页，{{ total }} 个文件）：
         </p>
-        <table class="pdf-table">
-          <thead>
-            <tr>
-              <th style="width:10%">选择</th>
-              <th style="width:40%">文件名称</th>
-              <th style="width:50%">文件地址</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="pdf in pdfList" :key="pdf.id">
-              <td>
-                <input
-                  type="checkbox"
-                  :checked="selectedFileIds.includes(pdf.id)"
-                  @change="toggleFile(pdf, $event)"
-                />
-              </td>
-              <td><a :href="pdf.url" target="_blank">{{ pdf.name }}</a></td>
-              <td>{{ pdf.url }}</td>
-            </tr>
-          </tbody>
-        </table>
+
+        <!-- 表格外层容器，带滚动 -->
+        <div class="pdf-table-wrapper">
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th style="width:10%">选择</th>
+                <th style="width:20%">文件名称</th>
+                <th style="width:10%">页数</th>
+                <th style="width:10%">机构</th>
+                <th style="width:10%">时间</th>
+                <th style="width:10%">类型</th>
+                <th style="width:30%">文件地址</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="pdf in pdfList" :key="pdf.id">
+                <td>
+                  <input
+                    type="checkbox"
+                    :checked="selectedFileIds.includes(pdf.id)"
+                    @change="toggleFile(pdf, $event)"
+                  />
+                </td>
+                <td><a :href="pdf.url" target="_blank">{{ pdf.name }}</a></td>
+                <td>{{ pdf.pages }}</td>
+                <td>{{ pdf.reportOrganization }}</td>
+                <td>{{ pdf.reportTime }}</td>
+                <td>{{ pdf.type }}</td>
+                <td>{{ pdf.url }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <!-- 分页控制 -->
         <div class="pagination">
@@ -66,7 +78,7 @@
 
       <!-- 开始写作按钮 -->
       <div class="action-btn">
-        <button  @click="startWriting" class="btn-start">
+        <button @click="startWriting" class="btn-start">
           开始写作
         </button>
         <button :disabled="selectedFiles.length === 0" @click="cleanSelectedFiles" class="btn-start">
@@ -86,8 +98,9 @@
         :id="id"
         :title_p="title"
         :content_p="content"
-        :sort_content_p = "sort_content"
-        :author_p = "author"
+        :sort_content_p="sort_content"
+        :author_p="author"
+        :columnName_p="column_name"
         @saved="onSaved"
       />
     </div>
@@ -109,14 +122,15 @@ export default {
   setup(props) {
     const keyword = ref('')
     const pdfList = ref([])
-    const selectedFiles = ref([]) // 保存选中的文件对象
-    const selectedFileIds = ref([]) // 保存选中的文件 id
+    const selectedFiles = ref([])
+    const selectedFileIds = ref([])
     const loading = ref(false)
     const error = ref('')
     const writing = ref(false)
     const title = ref('')
     const content = ref('')
     const sort_content = ref('')
+    const column_name = ref('')
     const author = ref('')
     const currentPage = ref(1)
     const pageSize = ref(10)
@@ -135,15 +149,20 @@ export default {
           content.value = a.articleContent || ''
           sort_content.value = a.articleSortContent || ''
           author.value = a.author || ''
+          column_name.value = a.columnName || ''
           selectedFiles.value = []
           selectedFileIds.value = []
           const reports = await search_research_reports_by_ids(a.researchReportIds)
           pdfList.value = reports.map(report => ({
             id: report.id,
             name: report.title,
+            pages: report.pages,
+            reportOrganization: report.reportOrganization,
+            reportTime: report.reportTime,
+            type:report.type,
             url: `${window.location.origin}/api/research-report/${report.id}?token=${token}`
           }))
-          selectedFiles.value = [...pdfList.value] // 默认全选
+          selectedFiles.value = [...pdfList.value]
           selectedFileIds.value = pdfList.value.map(f => f.id)
           total.value = pdfList.value.length
         }
@@ -171,6 +190,10 @@ export default {
         pdfList.value = res.list.map(report => ({
           id: report.id,
           name: report.title,
+          pages: report.pages,
+            reportOrganization: report.reportOrganization,
+            reportTime: report.reportTime,
+            type:report.type,
           url: `${window.location.origin}/api/research-report/${report.id}?token=${token}`
         }))
         total.value = res.total || 0
@@ -229,141 +252,134 @@ export default {
       totalPages,
       total,
       author,
-      sort_content
+      sort_content,
+      column_name
     }
   }
 }
 </script>
+
 <style scoped>
 .pdf-editor-page {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: #333;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #333;
 }
 
 .page-title {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    text-align: center;
-    color: #1f2937;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #1f2937;
 }
 
 .search-bar {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .search-bar input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #cbd5e0;
-    border-radius: 4px;
-    font-size: 14px;
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .btn-search {
-    padding: 8px 16px;
-    background-color: #3b82f6;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .btn-search:hover {
-    background-color: #2563eb;
+  background-color: #2563eb;
 }
 
 .card {
-    background-color: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .list-title {
-    font-weight: 500;
-    margin-bottom: 12px;
+  font-weight: 500;
+  margin-bottom: 12px;
 }
 
+/* 表格外层容器 */
+.pdf-table-wrapper {
+  max-height: 500px; /* 控制最大高度 */
+  overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* 表格 */
 .pdf-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.pdf-table th,
-.pdf-table td {
-    border: 1px solid #e5e7eb;
-    padding: 8px 12px;
-    text-align: left;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  background-color: #fff;
 }
 
 .pdf-table th {
-    background-color: #f3f4f6;
-    color: #374151;
-    font-weight: 500;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  border-bottom: 2px solid #e5e7eb;
+  padding: 12px 16px;
+  text-align: left;
 }
 
-.pdf-table td input[type="checkbox"] {
-    transform: scale(1.1);
+.pdf-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #4b5563;
+}
+
+.pdf-table td:first-child {
+  text-align: center;
+}
+
+.pdf-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.pdf-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
 }
 
 .pdf-table tbody tr:hover {
-    background-color: #f9fafb;
+  background-color: #e0f2fe;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.pdf-table td a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.pdf-table td a:hover {
+  text-decoration: underline;
 }
 
 .selected-info .file-tag {
-    display: inline-block;
-    background: #e0f2fe;
-    color: #0369a1;
-    padding: 3px 8px;
-    margin-right: 6px;
-    border-radius: 4px;
-    font-size: 13px;
-}
-
-.action-btn {
-    text-align: center;
-    margin-top: 16px;
-}
-
-.btn-start {
-    padding: 8px 24px;
-    background-color: #10b981;
-    color: #fff;
-    font-weight: 500;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.btn-start:disabled {
-    background-color: #94d3b8;
-    cursor: not-allowed;
-}
-
-.btn-start:hover:not(:disabled) {
-    background-color: #059669;
-}
-
-.loading {
-    color: #3b82f6;
-    margin-top: 12px;
-    font-weight: 500;
-}
-
-.error {
-    color: #ef4444;
-    margin-top: 12px;
-    font-weight: 500;
-}
-.file-tag {
   display: inline-flex;
   align-items: center;
   margin: 0 8px 8px 0;
@@ -381,25 +397,61 @@ export default {
   cursor: pointer;
 }
 
+.action-btn {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.btn-start {
+  padding: 8px 24px;
+  background-color: #10b981;
+  color: #fff;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-start:disabled {
+  background-color: #94d3b8;
+  cursor: not-allowed;
+}
+
+.btn-start:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.loading {
+  color: #3b82f6;
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+.error {
+  color: #ef4444;
+  margin-top: 12px;
+  font-weight: 500;
+}
+
 .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
-    margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .pagination button {
-    padding: 6px 12px;
-    background-color: #f3f4f6;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    cursor: pointer;
+  padding: 6px 12px;
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .pagination button:disabled {
-    color: #9ca3af;
-    cursor: not-allowed;
-    background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  background-color: #e5e7eb;
 }
 </style>

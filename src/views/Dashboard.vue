@@ -16,6 +16,7 @@
       <div class="article-meta">
         <span>前端是否显示：{{ a.showFlag == "1" ? "是":"否" }}</span>
         <span>作者：{{ a.author }}</span>
+        <span>所属专栏:{{ a.columnName }}</span>
         <span>👍 {{ a.likeCount ?? 0 }}</span>
         <span>🔗 {{ a.shareCount ?? 0 }}</span>
         <span>置顶等级：{{ a.topLevel }}</span>

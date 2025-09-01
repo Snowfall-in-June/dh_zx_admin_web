@@ -30,6 +30,10 @@
         </div>
         <!-- 文章标题 -->
         <div class="form-group">
+            <label class="form-label">专栏名称：</label>
+            <input v-model="columnName" placeholder="请输入专栏名称" class="form-input" />
+        </div>
+        <div class="form-group">
             <label class="form-label">标题：</label>
             <input v-model="title" placeholder="请输入文章标题" class="form-input" />
         </div>
@@ -71,7 +75,8 @@ export default {
         content_p: { type: String, default: 'content' },
         title_p: { type: String, default: 'titile' },
         author_p:{type:String,default:'author'},
-        sort_content_p:{type:String,default:'sort_content'}
+        sort_content_p:{type:String,default:'sort_content'},
+        columnName_p:{type:String,default:"0"}
     },
     emits: ['saved'],
     components: { RichEditorTiny },
@@ -80,6 +85,7 @@ export default {
         const content = ref('')
         const sort_content = ref('')
         const author = ref('')
+        const columnName = ref('')
         const message = ref('')
 
         async function load() {
@@ -88,6 +94,7 @@ export default {
                 content.value = props.content_p
                 sort_content.value = props.sort_content_p
                 author.value = props.author_p
+                columnName.value = props.columnName_p
             }
         }
 
@@ -113,7 +120,8 @@ export default {
                         articleTitle: title.value,
                         articleContent: content.value,
                         articleSortContent: sort_content.value,
-                        author: author.value
+                        author: author.value,
+                        columnName: columnName.value
                     })
                     if (saved) {
                         message.value = '更新成功！'
@@ -131,7 +139,8 @@ export default {
                         articleTitle: title.value,
                         articleContent: content.value,
                         articleSortContent: sort_content.value,
-                        author: author.value
+                        author: author.value,
+                        columnName: columnName.value
                     })
 
                     if (saved) {
@@ -159,7 +168,7 @@ export default {
 
         onMounted(load)
 
-        return { title, content, save, back, message,sort_content,author }
+        return { title, content, save, back, message,sort_content,author,columnName}
     }
 }
 </script>
